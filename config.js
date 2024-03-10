@@ -19,6 +19,9 @@ const chromeArg = [
 const minDelay = 1000;
 const maxDelay = 3000;
 
+const screenChromeWidth = 1920;
+const screenChromeHeight = 1080;
+
 //account
 const server = "https://ts2.x1.europe.travian.com/";
 const login = "omencore";
@@ -55,4 +58,6 @@ module.exports = {
   chromeArg,
   chromePath,
   systemBrowserXLength,
+  screenChromeWidth,
+  screenChromeHeight,
 };

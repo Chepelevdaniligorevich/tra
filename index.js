@@ -17,6 +17,8 @@ const {
   minDelay,
   maxDelay,
   chromePath,
+  screenChromeWidth,
+  screenChromeHeight,
 } = require("./config");
 const {
   getCoordinatesOfElement,
@@ -26,7 +28,6 @@ const {
   getRandomNumber,
 } = require("./utils");
 const robot = require("robotjs");
-const electron = require("electron");
 
 robot.setMouseDelay(mouseDelay);
 
@@ -42,17 +43,39 @@ async function connectToChrome(wsPort) {
 
     const pages = await browser.pages();
     const page = pages[0];
-    await page.setViewport({ width: 1920, height: 1080 });
+    await page.setViewport({
+      width: screenChromeWidth,
+      height: screenChromeHeight,
+    });
     await page.goto(server);
 
-    const { width, height } = robot.getScreenSize();
+    const windowPosition = await page.evaluate(() => {
+      return {
+        screenY: window.screenY,
+        innerHeight: window.innerHeight,
+        outerHeight: window.outerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+        documentElement: document.documentElement.clientHeight,
+        body: document.body.clientHeight,
+      };
+    });
 
-    console.log("width", width);
-    console.log("height", height);
+    const { height } = robot.getScreenSize();
 
-    const viewportSize = await page.viewport();
+    console.log("screen height", height);
 
-    console.log("viewportSize", viewportSize);
+    console.log(
+      "windowPosition.devicePixelRatio",
+      windowPosition.devicePixelRatio
+    );
+    console.log("windowPosition.screenY", windowPosition.screenY);
+    console.log("windowPosition.body", windowPosition.body);
+    console.log(
+      "windowPosition.documentElement",
+      windowPosition.documentElement
+    );
+    console.log("windowPosition.outerHeight", windowPosition.outerHeight);
+    console.log("windowPosition.innerHeight", windowPosition.innerHeight);
 
     await typeIntoFieldWithRobot({
       page,
@@ -102,7 +125,7 @@ async function connectToChrome(wsPort) {
                 checkbox
               );
               robotClickOnCors({
-                x: checkboxCoordinates.x + 75,
+                x: checkboxCoordinates.x + 65,
                 y: checkboxCoordinates.y,
               });
 
@@ -113,7 +136,7 @@ async function connectToChrome(wsPort) {
 
               if (notEnoughClassExists) {
                 robotClickOnCors({
-                  x: checkboxCoordinates.x + 75,
+                  x: checkboxCoordinates.x + 65,
                   y: checkboxCoordinates.y,
                 });
                 break;
