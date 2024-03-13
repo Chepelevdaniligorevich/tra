@@ -26,6 +26,11 @@ const {
   robotClickOnCors,
   robotClickOnSelect,
   getRandomNumber,
+  checkElementVisibility,
+  scrollToElement,
+  checkElementVisibilityBySelect,
+  scrollToSelector,
+  removeElementBySelector,
 } = require("./utils");
 const robot = require("robotjs");
 
@@ -49,19 +54,6 @@ async function connectToChrome(wsPort) {
     });
 
     await page.goto(server);
-
-    const windowPosition = await page.evaluate(() => {
-      return {
-        screenY: window.screenY,
-        innerHeight: window.innerHeight,
-        outerHeight: window.outerHeight,
-        devicePixelRatio: window.devicePixelRatio,
-        documentElement: document.documentElement.clientHeight,
-        body: document.body.clientHeight,
-      };
-    });
-
-    const { height } = robot.getScreenSize();
 
     await typeIntoFieldWithRobot({
       page,
@@ -92,6 +84,8 @@ async function connectToChrome(wsPort) {
     });
     await page.waitForSelector(".titleInHeader");
 
+    await removeElementBySelector({ page, selector: "#stickyWrapper" });
+
     while (true) {
       try {
         const slotRows = await page.$$("tr.slot");
@@ -105,6 +99,14 @@ async function connectToChrome(wsPort) {
           if (!attackSmallElement) {
             const selectionCell = await slotRow.$("td.selection");
             const checkbox = await selectionCell.$('input[type="checkbox"]');
+
+            const isVisible = await checkElementVisibility(checkbox);
+
+            console.log("isVisible", isVisible);
+            if (!isVisible) {
+              await scrollToElement(checkbox);
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
 
             if (checkbox) {
               const checkboxCoordinates = await getCoordinatesOfElement(
@@ -131,6 +133,21 @@ async function connectToChrome(wsPort) {
               }
             }
           }
+        }
+
+        const startButtonVisible = await checkElementVisibilityBySelect({
+          page,
+          selector: linkTwoRallyPointStartButtonSelector,
+        });
+
+        console.log("startButtonVisible", startButtonVisible);
+
+        if (!startButtonVisible) {
+          await scrollToSelector({
+            page,
+            selector: linkTwoRallyPointStartButtonSelector,
+          });
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
         if (countOfAttacks > 0) {

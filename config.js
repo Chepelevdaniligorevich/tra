@@ -1,7 +1,7 @@
 //main
 const systemBrowserYLength = 0;
 const systemBrowserXLength = 0;
-const mouseDelay = 1000;
+const mouseDelay = 200;
 const chromePath =
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const chromeArg = [

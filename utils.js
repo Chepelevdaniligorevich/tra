@@ -67,6 +67,64 @@ async function robotClickOnCors({
   robot.mouseClick();
 }
 
+async function checkElementVisibility(elementHandle) {
+  const isElementVisible = await elementHandle.evaluate((el) => {
+    const rect = el.getBoundingClientRect();
+    return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= window.innerHeight &&
+      rect.right <= window.innerWidth
+    );
+  });
+
+  return isElementVisible;
+}
+
+async function checkElementVisibilityBySelect({ page, selector }) {
+  const isElementVisible = await page.evaluate((selector) => {
+    const element = document.querySelector(selector);
+    const rect = element.getBoundingClientRect();
+    return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= window.innerHeight &&
+      rect.right <= window.innerWidth
+    );
+  }, selector);
+
+  return isElementVisible;
+}
+
+async function scrollToElement(elementHandle) {
+  await elementHandle.evaluate((el) => {
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
+  });
+}
+async function scrollToSelector({ page, selector }) {
+  await page.evaluate((selector) => {
+    const element = document.querySelector(selector);
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
+  }, selector);
+}
+
+async function removeElementBySelector({ page, selector }) {
+  await page.evaluate((selector) => {
+    const element = document.querySelector(selector);
+    if (element) {
+      element.remove();
+    }
+  }, selector);
+}
+
 module.exports = {
   getCoordinatesOfElement,
   getCoordinatesOfSelector,
@@ -74,4 +132,9 @@ module.exports = {
   robotClickOnCors,
   robotClickOnSelect,
   getRandomNumber,
+  checkElementVisibility,
+  scrollToElement,
+  checkElementVisibilityBySelect,
+  scrollToSelector,
+  removeElementBySelector,
 };
