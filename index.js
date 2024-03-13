@@ -47,6 +47,7 @@ async function connectToChrome(wsPort) {
       width: screenChromeWidth,
       height: screenChromeHeight,
     });
+
     await page.goto(server);
 
     const windowPosition = await page.evaluate(() => {
@@ -62,21 +63,6 @@ async function connectToChrome(wsPort) {
 
     const { height } = robot.getScreenSize();
 
-    console.log("screen height", height);
-
-    console.log(
-      "windowPosition.devicePixelRatio",
-      windowPosition.devicePixelRatio
-    );
-    console.log("windowPosition.screenY", windowPosition.screenY);
-    console.log("windowPosition.body", windowPosition.body);
-    console.log(
-      "windowPosition.documentElement",
-      windowPosition.documentElement
-    );
-    console.log("windowPosition.outerHeight", windowPosition.outerHeight);
-    console.log("windowPosition.innerHeight", windowPosition.innerHeight);
-
     await typeIntoFieldWithRobot({
       page,
       selector: loginPageNameSelector,
@@ -90,19 +76,19 @@ async function connectToChrome(wsPort) {
     await robotClickOnSelect({
       page,
       selector: loginScreenLoginButtonSelector,
-      xCorrection: systemBrowserXLength + 50,
+      xCorrection: systemBrowserXLength,
     });
     await page.waitForSelector(linkTwoBuildingSelector);
     await robotClickOnSelect({
       page,
       selector: linkTwoBuildingSelector,
-      xCorrection: systemBrowserXLength + 50,
+      xCorrection: systemBrowserXLength,
     });
     await page.waitForSelector(linkTwoRallyPointSelector);
     await robotClickOnSelect({
       page,
       selector: linkTwoRallyPointSelector,
-      xCorrection: systemBrowserXLength + 50,
+      xCorrection: systemBrowserXLength,
     });
     await page.waitForSelector(".titleInHeader");
 
@@ -125,7 +111,7 @@ async function connectToChrome(wsPort) {
                 checkbox
               );
               robotClickOnCors({
-                x: checkboxCoordinates.x + 65,
+                x: checkboxCoordinates.x,
                 y: checkboxCoordinates.y,
               });
 
@@ -136,7 +122,7 @@ async function connectToChrome(wsPort) {
 
               if (notEnoughClassExists) {
                 robotClickOnCors({
-                  x: checkboxCoordinates.x + 65,
+                  x: checkboxCoordinates.x,
                   y: checkboxCoordinates.y,
                 });
                 break;
@@ -151,7 +137,7 @@ async function connectToChrome(wsPort) {
           await robotClickOnSelect({
             page,
             selector: linkTwoRallyPointStartButtonSelector,
-            xCorrection: systemBrowserXLength + 50,
+            xCorrection: systemBrowserXLength,
           });
         }
       } catch (error) {
