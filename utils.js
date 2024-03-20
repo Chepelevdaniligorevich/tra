@@ -17,6 +17,15 @@ async function getCoordinatesOfElement(element) {
   }
 }
 
+function transformStringToNumber(inputString) {
+  // Remove any non-digit characters
+  const cleanedString = inputString.replace(/[^\d.]/g, "");
+  // Parse the cleaned string into a number and remove any decimal points
+  const numberValue = parseFloat(cleanedString.replace(".", ""));
+  // Return the number
+  return numberValue;
+}
+
 async function getCoordinatesOfSelector({ page, selector }) {
   const elementHandle = await page.$(selector);
 
@@ -44,6 +53,21 @@ async function robotClickOnSelect({
   yCorrection = systemBrowserYLength,
 }) {
   const coordinates = await getCoordinatesOfSelector({ page, selector });
+
+  robotClickOnCors({
+    x: coordinates.x,
+    y: coordinates.y,
+    xCorrection,
+    yCorrection,
+  });
+}
+
+async function robotClickOnElement({
+  elementHandle,
+  xCorrection = systemBrowserXLength,
+  yCorrection = systemBrowserYLength,
+}) {
+  const coordinates = await getCoordinatesOfElement(elementHandle);
 
   robotClickOnCors({
     x: coordinates.x,
@@ -125,6 +149,22 @@ async function removeElementBySelector({ page, selector }) {
   }, selector);
 }
 
+function getDateFormated() {
+  const now = new Date();
+
+  // Extract hours, minutes, date, and month
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const date = now.getDate();
+  const month = now.getMonth() + 1; // Months are zero-indexed, so add 1
+
+  // Format hours and minutes with leading zeros if necessary
+  const formattedHours = hours < 10 ? "0" + hours : hours;
+  const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
+
+  return `${formattedHours}:${formattedMinutes}. ${date}/${month}`;
+}
+
 module.exports = {
   getCoordinatesOfElement,
   getCoordinatesOfSelector,
@@ -137,4 +177,7 @@ module.exports = {
   checkElementVisibilityBySelect,
   scrollToSelector,
   removeElementBySelector,
+  robotClickOnElement,
+  getDateFormated,
+  transformStringToNumber,
 };

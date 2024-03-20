@@ -1,3 +1,9 @@
+//google sheets
+const creds = require("/Users/a1/Documents/travbot/credentials.json");
+
+const SPREADSHEET_ID = "1-Yz2Tp8ZBcfjz8aKlbkhlyJQPPyCJYML6ErSYvtauB0";
+const SHEET_NAME = "try91";
+
 //main
 const systemBrowserYLength = 0;
 const systemBrowserXLength = 0;
@@ -18,15 +24,13 @@ const chromeArg = [
   "--kiosk",
   // "--start-fullscreen",
 ];
-const minDelay = 1000;
-const maxDelay = 3000;
 
 const screenChromeWidth = 1920;
 const screenChromeHeight = 1080;
 
 //account
-const server = "https://ts7.x1.asia.travian.com/";
-const login = "farmboy";
+const server = "https://ts8.x1.america.travian.com/";
+const login = "";
 const password = "";
 
 //SELECTORS
@@ -38,14 +42,15 @@ const loginPagePasswordSelector =
 const loginScreenLoginButtonSelector = ".loginButtonRow button";
 //village
 const linkTwoBuildingSelector = ".buildingView";
+const linkTwoResourceSelector = ".resourceView";
 const linkTwoRallyPointSelector = ".a39";
+const linkToRandomCropField = ".buildingSlot9";
 //rally point
 const linkTwoRallyPointStartButtonSelector =
   ".textButtonV2.buttonFramed.startFarmList.rectangle.withText.green";
 
 module.exports = {
-  minDelay,
-  maxDelay,
+  linkTwoResourceSelector,
   systemBrowserYLength,
   mouseDelay,
   server,
@@ -62,4 +67,8 @@ module.exports = {
   systemBrowserXLength,
   screenChromeWidth,
   screenChromeHeight,
+  linkToRandomCropField,
+  creds,
+  SPREADSHEET_ID,
+  SHEET_NAME,
 };

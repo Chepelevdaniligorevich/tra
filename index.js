@@ -14,11 +14,11 @@ const {
   linkTwoRallyPointSelector,
   linkTwoRallyPointStartButtonSelector,
   chromeArg,
-  minDelay,
-  maxDelay,
   chromePath,
   screenChromeWidth,
   screenChromeHeight,
+  linkTwoResourceSelector,
+  linkToRandomCropField,
 } = require("./config");
 const {
   getCoordinatesOfElement,
@@ -28,10 +28,16 @@ const {
   getRandomNumber,
   checkElementVisibility,
   scrollToElement,
-  checkElementVisibilityBySelect,
-  scrollToSelector,
   removeElementBySelector,
+  robotClickOnElement,
+  transformStringToNumber,
 } = require("./utils");
+const {
+  loadGoogleSheets,
+  getSheetsCell,
+  setSheetsCell,
+  updateSheetsTime,
+} = require("./tables");
 const robot = require("robotjs");
 
 robot.setMouseDelay(mouseDelay);
@@ -42,6 +48,15 @@ let connected = false;
 
 async function connectToChrome(wsPort) {
   try {
+    const sheet = await loadGoogleSheets();
+
+    const listsValue = await getSheetsCell(sheet, "B2");
+    const lists = listsValue.split(", ");
+    const delayValue = await getSheetsCell(sheet, "C2");
+    const [minDelay, maxDelay] = delayValue.split(", ");
+    console.log("maxDelay: ", maxDelay);
+    console.log("minDelay: ", minDelay);
+
     const browser = await puppeteer.connect({
       browserWSEndpoint: wsPort,
     });
@@ -73,6 +88,12 @@ async function connectToChrome(wsPort) {
     await page.waitForSelector(linkTwoBuildingSelector);
     await robotClickOnSelect({
       page,
+      selector: linkTwoResourceSelector,
+      xCorrection: systemBrowserXLength,
+    });
+    await page.waitForSelector(linkToRandomCropField);
+    await robotClickOnSelect({
+      page,
       selector: linkTwoBuildingSelector,
       xCorrection: systemBrowserXLength,
     });
@@ -84,84 +105,137 @@ async function connectToChrome(wsPort) {
     });
     await page.waitForSelector(".titleInHeader");
 
+    await page.waitForSelector(".farmListWrapper div.name");
+
     await removeElementBySelector({ page, selector: "#stickyWrapper" });
-
     while (true) {
+      const farmListsFarm = [];
+
       try {
-        const slotRows = await page.$$("tr.slot");
+        for (let list of lists) {
+          let dayFarm = 0;
+          const parentElements = await page.$$(".farmListWrapper");
 
-        let countOfAttacks = 0;
+          let parentElement = null;
 
-        for (const slotRow of slotRows) {
-          const stateCell = await slotRow.$("td.state");
-          const attackSmallElement = await stateCell.$("i.attack_small");
+          for (let parent of parentElements) {
+            const isCorrect = await page.evaluate(
+              (el, list) => {
+                const div = el.querySelector("div.name");
+                if (div.innerText.includes(list)) {
+                  return true;
+                }
 
-          if (!attackSmallElement) {
-            const selectionCell = await slotRow.$("td.selection");
-            const checkbox = await selectionCell.$('input[type="checkbox"]');
-
-            const isVisible = await checkElementVisibility(checkbox);
-
-            console.log("isVisible", isVisible);
-            if (!isVisible) {
-              await scrollToElement(checkbox);
-              await new Promise((resolve) => setTimeout(resolve, 2000));
-            }
-
-            if (checkbox) {
-              const checkboxCoordinates = await getCoordinatesOfElement(
-                checkbox
-              );
-              robotClickOnCors({
-                x: checkboxCoordinates.x,
-                y: checkboxCoordinates.y,
-              });
-
-              const summedTroopsElement = await page.$(".summedTroops");
-              const notEnoughClassExists = await summedTroopsElement.$(
-                ".value.notEnough"
-              );
-
-              if (notEnoughClassExists) {
-                robotClickOnCors({
-                  x: checkboxCoordinates.x,
-                  y: checkboxCoordinates.y,
-                });
-                break;
-              } else {
-                countOfAttacks++;
-              }
+                return false;
+              },
+              parent,
+              list
+            );
+            if (isCorrect) {
+              parentElement = parent;
             }
           }
-        }
 
-        const startButtonVisible = await checkElementVisibilityBySelect({
-          page,
-          selector: linkTwoRallyPointStartButtonSelector,
-        });
+          if (parentElement) {
+            // Find all tr.slot elements within the parent element
+            const slotRows = await parentElement.$$("tr.slot");
 
-        console.log("startButtonVisible", startButtonVisible);
+            let countOfAttacks = 0;
 
-        if (!startButtonVisible) {
-          await scrollToSelector({
-            page,
-            selector: linkTwoRallyPointStartButtonSelector,
-          });
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
+            for (const slotRow of slotRows) {
+              const spanValue = await page.evaluate((slotRow) => {
+                const spanElement = slotRow.querySelector(
+                  "div.averageRaidBounty > span"
+                );
+                return spanElement ? spanElement.innerText : null;
+              }, slotRow);
 
-        if (countOfAttacks > 0) {
-          await robotClickOnSelect({
-            page,
-            selector: linkTwoRallyPointStartButtonSelector,
-            xCorrection: systemBrowserXLength,
-          });
+              dayFarm += transformStringToNumber(spanValue);
+
+              const stateCell = await slotRow.$("td.state");
+              const attackSmallElement = await stateCell.$("i.attack_small");
+
+              if (!attackSmallElement) {
+                const selectionCell = await slotRow.$("td.selection");
+                const checkbox = await selectionCell.$(
+                  'input[type="checkbox"]'
+                );
+
+                const isVisible = await checkElementVisibility(checkbox);
+
+                if (!isVisible) {
+                  await scrollToElement(checkbox);
+                  await new Promise((resolve) => setTimeout(resolve, 2000));
+                }
+
+                if (checkbox) {
+                  const checkboxCoordinates = await getCoordinatesOfElement(
+                    checkbox
+                  );
+                  robotClickOnCors({
+                    x: checkboxCoordinates.x,
+                    y: checkboxCoordinates.y,
+                  });
+
+                  const summedTroopsElement = await page.$(".summedTroops");
+
+                  if (summedTroopsElement) {
+                    const notEnoughClassExists = await summedTroopsElement.$(
+                      ".value.notEnough"
+                    );
+
+                    if (notEnoughClassExists) {
+                      robotClickOnCors({
+                        x: checkboxCoordinates.x,
+                        y: checkboxCoordinates.y,
+                      });
+                      break;
+                    } else {
+                      countOfAttacks++;
+                    }
+                  } else {
+                    countOfAttacks++;
+                  }
+                }
+              }
+            }
+
+            if (countOfAttacks > 0) {
+              const startButtonInsideTheList = await parentElement.$(
+                linkTwoRallyPointStartButtonSelector
+              );
+
+              const startButtonVisible = await checkElementVisibility(
+                startButtonInsideTheList
+              );
+
+              if (!startButtonVisible) {
+                await scrollToElement(startButtonInsideTheList);
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+              }
+              await robotClickOnElement({
+                elementHandle: startButtonInsideTheList,
+              });
+              farmListsFarm.push(`${list}: ${dayFarm}`);
+            }
+          } else {
+            console.log("Parent element not found");
+          }
         }
       } catch (error) {
+        console.log("Error in script", error);
         break;
       }
+      await updateSheetsTime(sheet);
+      setSheetsCell(sheet, "D2", farmListsFarm.join(", "));
       await new Promise((resolve) =>
-        setTimeout(resolve, getRandomNumber(minDelay, maxDelay))
+        setTimeout(
+          resolve,
+          getRandomNumber(
+            transformStringToNumber(minDelay),
+            transformStringToNumber(maxDelay)
+          )
+        )
       );
     }
   } catch (error) {
