@@ -1,8 +1,3 @@
-//google sheets
-const creds = require("/Users/danilchepelev/Documents/tra/credentials.json");
-const SPREADSHEET_ID = "1-Yz2Tp8ZBcfjz8aKlbkhlyJQPPyCJYML6ErSYvtauB0";
-const SHEET_NAME = "try91";
-
 //main
 const systemBrowserYLength = 0;
 const systemBrowserXLength = 0;
@@ -28,17 +23,18 @@ const screenChromeWidth = 1920;
 const screenChromeHeight = 1080;
 
 //account
-const server = "";
-const login = "";
-const password = "";
+const server = "https://ts1.x1.international.travian.com";
+const login = "v8303036@gmail.com";
+const password = "Q!Q@q3q4";
 
 //SELECTORS
 //login page
 const loginPageNameSelector =
-    "#loginForm > tbody > tr.account > td:nth-child(2) > input";
+    "#dialogContent > div > label.input > input[type=text]";
 const loginPagePasswordSelector =
-    "#loginForm > tbody > tr.pass > td:nth-child(2) > input";
-const loginScreenLoginButtonSelector = ".loginButtonRow button";
+    "#dialogContent > div > label:nth-child(2) > input[type=password]";
+const loginScreenLoginButtonSelector =
+    "#dialogContent > div > div.centeredText > button > div";
 //village
 const linkTwoBuildingSelector = ".buildingView";
 const linkTwoResourceSelector = ".resourceView";
@@ -67,7 +63,4 @@ module.exports = {
     screenChromeWidth,
     screenChromeHeight,
     linkToRandomCropField,
-    creds,
-    SPREADSHEET_ID,
-    SHEET_NAME,
 };

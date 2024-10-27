@@ -22,7 +22,6 @@ const {
     getRandomNumber,
     transformStringToNumber,
 } = require("./utils");
-const { loadGoogleSheets, getSheetsCell } = require("./tables");
 const { heroFarm } = require("./heroFarm");
 const { farmLists } = require("./farm");
 
@@ -36,12 +35,7 @@ let connected = false;
 
 async function connectToChrome(wsPort) {
     try {
-        const sheet = await loadGoogleSheets();
-
-        const delayValue = await getSheetsCell(sheet, "C2");
-        const [minDelay, maxDelay] = delayValue.split(", ");
-        console.log("maxDelay: ", maxDelay);
-        console.log("minDelay: ", minDelay);
+        const [minDelay, maxDelay] = [10000, 20000];
 
         const browser = await puppeteer.connect({
             browserWSEndpoint: wsPort,
@@ -74,17 +68,11 @@ async function connectToChrome(wsPort) {
         await page.waitForSelector(linkTwoBuildingSelector);
 
         while (true) {
-            await farmLists(page, sheet);
-            await heroFarm(page, sheet);
+            await farmLists(page);
+            // await heroFarm(page);
 
             await new Promise((resolve) =>
-                setTimeout(
-                    resolve,
-                    getRandomNumber(
-                        transformStringToNumber(minDelay),
-                        transformStringToNumber(maxDelay)
-                    )
-                )
+                setTimeout(resolve, getRandomNumber(minDelay, maxDelay))
             );
         }
     } catch (error) {

@@ -8,16 +8,14 @@ const {
     robotClickOnElement,
     transformStringToNumber,
 } = require("./utils");
-const { getSheetsCell, setSheetsCell, updateSheetsTime } = require("./tables");
 
 const { goToResourseFields, goToRallyPoint } = require("./goToUtils");
 
-const farmLists = async (page, sheet) => {
+const farmLists = async (page) => {
     const farmListsFarm = [];
 
     try {
-        const listsValue = await getSheetsCell(sheet, "B2");
-        const lists = listsValue.split(",");
+        const lists = ["farm"];
 
         await goToResourseFields(page);
 
@@ -137,9 +135,6 @@ const farmLists = async (page, sheet) => {
             } else {
                 console.log("Parent element not found");
             }
-
-            await updateSheetsTime(sheet);
-            setSheetsCell(sheet, "D2", farmListsFarm.join(","));
         }
     } catch (error) {
         console.log("Error during farm", error);

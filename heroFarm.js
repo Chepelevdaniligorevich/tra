@@ -5,106 +5,99 @@ const {
     typeIntoFieldWithRobot,
 } = require("./utils");
 const robot = require("robotjs");
-const { getSheetsCell, setSheetsCell, updateSheetsTime } = require("./tables");
+const fs = require("fs");
 
 const { goToResourseFields, goToRallyPoint } = require("./goToUtils");
 
-const heroFarm = async (page, sheet) => {
+const heroFarm = async (page) => {
     try {
-        const heroFarmList = await getSheetsCell(sheet, "A6");
+        await goToResourseFields(page);
 
-        if (heroFarmList) {
-            const heroFarmListArray = heroFarmList.split(",");
+        const isHeroInVillage = await page.evaluate(() => {
+            return !!document.querySelector(".unit.uhero");
+        });
 
-            const [firstHeroFarm, ...restHeroFarm] = heroFarmListArray;
+        if (isHeroInVillage) {
+            const data = await fs.readFile("./input.json", "utf8");
 
-            await goToResourseFields(page);
+            const dataParsed = JSON.parse(data);
+            const firtCoorsToFarm = dataParsed.heroFarm.shift();
+            dataParsed.alreadyFarmed =
+                dataParsed.alreadyFarmed.push(firtCoorsToFarm);
+            fs.writeFile("output.json", JSON.stringify(dataParsed));
 
-            const isHeroInVillage = await page.evaluate(() => {
-                return !!document.querySelector(".unit.uhero");
+            const [corX, corY] = firtCoorsToFarm.split("/");
+
+            await goToRallyPoint(page);
+
+            await robotClickOnSelect({
+                page,
+                selector:
+                    "#content > div.contentNavi.subNavi > div > div.content.favor.favorKey2",
             });
 
-            if (isHeroInVillage) {
-                const [corX, corY] = firstHeroFarm.split("/");
+            await new Promise((resolve) =>
+                setTimeout(resolve, getRandomNumber(2000, 3000))
+            );
 
-                await goToRallyPoint(page);
+            const boundingBox = await page.evaluate(() => {
+                const tdElements = document.querySelectorAll("td.line-last");
 
-                await robotClickOnSelect({
-                    page,
-                    selector:
-                        "#content > div.contentNavi.subNavi > div > div.content.favor.favorKey2",
-                });
-
-                await new Promise((resolve) =>
-                    setTimeout(resolve, getRandomNumber(2000, 3000))
-                );
-
-                const boundingBox = await page.evaluate(() => {
-                    const tdElements =
-                        document.querySelectorAll("td.line-last");
-
-                    for (const tdElement of tdElements) {
-                        const imgElement =
-                            tdElement.querySelector("img.unit.uhero");
-                        if (imgElement) {
-                            const inputElement = imgElement.nextElementSibling;
-                            if (inputElement) {
-                                const boundingBox =
-                                    inputElement.getBoundingClientRect();
-                                return {
-                                    x: boundingBox.x + boundingBox.width / 2,
-                                    y: boundingBox.y + boundingBox.height / 2,
-                                };
-                            }
+                for (const tdElement of tdElements) {
+                    const imgElement =
+                        tdElement.querySelector("img.unit.uhero");
+                    if (imgElement) {
+                        const inputElement = imgElement.nextElementSibling;
+                        if (inputElement) {
+                            const boundingBox =
+                                inputElement.getBoundingClientRect();
+                            return {
+                                x: boundingBox.x + boundingBox.width / 2,
+                                y: boundingBox.y + boundingBox.height / 2,
+                            };
                         }
                     }
+                }
 
-                    return null;
-                });
+                return null;
+            });
 
-                await robotClickOnCors({
-                    x: boundingBox.x,
-                    y: boundingBox.y,
-                });
+            await robotClickOnCors({
+                x: boundingBox.x,
+                y: boundingBox.y,
+            });
 
-                robot.keyTap("numpad_1");
+            robot.keyTap("numpad_1");
 
-                await typeIntoFieldWithRobot({
-                    page,
-                    selector: "#xCoordInput",
-                    text: corX,
-                });
+            await typeIntoFieldWithRobot({
+                page,
+                selector: "#xCoordInput",
+                text: corX,
+            });
 
-                await typeIntoFieldWithRobot({
-                    page,
-                    selector: "#yCoordInput",
-                    text: corY,
-                });
+            await typeIntoFieldWithRobot({
+                page,
+                selector: "#yCoordInput",
+                text: corY,
+            });
 
-                await robotClickOnSelect({
-                    page,
-                    selector:
-                        "#build > div > form > div.option > label:nth-child(5) > input",
-                });
+            await robotClickOnSelect({
+                page,
+                selector:
+                    "#build > div > form > div.option > label:nth-child(5) > input",
+            });
 
-                await robotClickOnSelect({
-                    page,
-                    selector: "#ok",
-                });
+            await robotClickOnSelect({
+                page,
+                selector: "#ok",
+            });
 
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
 
-                await robotClickOnSelect({
-                    page,
-                    selector: ".rallyPointConfirm",
-                });
-
-                await updateSheetsTime(sheet, "C6");
-                setSheetsCell(sheet, "A6", restHeroFarm.join(","));
-
-                const alreadyFarmed = await getSheetsCell(sheet, "B6");
-                setSheetsCell(sheet, "B6", alreadyFarmed + "," + firstHeroFarm);
-            }
+            await robotClickOnSelect({
+                page,
+                selector: ".rallyPointConfirm",
+            });
         }
     } catch (error) {
         console.log("Error during hero farm", error);
